@@ -1,0 +1,228 @@
+{
+  "name": "data janitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -592,
+        -208
+      ],
+      "id": "1240d9a5-a29d-4ff2-933f-bcf3baf2d21c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/node/.n8n-files/customers-100.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        -208
+      ],
+      "id": "1c34c00c-dc62-463f-a1d8-74bb8b91a3c0",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -208
+      ],
+      "id": "7bb27db1-c80f-463d-bb9d-bb295218deba",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "let valid = [];\nlet invalid = [];\n\nfor (const item of items) {\n  const row = item.json;\n\n  if (!row.Email || !row[\"First Name\"]) {\n    invalid.push(row);\n  } else {\n    valid.push(row);\n  }\n}\n\nreturn [{\n  json: {\n    validCount: valid.length,\n    invalidCount: invalid.length\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -208
+      ],
+      "id": "e4782135-acbe-4ce0-9e96-3976f853290b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8b117365-6d02-499d-9fc7-2888a24c9dc3",
+              "leftValue": "={{ $json.invalidCount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "fa59900a-faba-4796-9df4-e6337b60e0f5",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        112,
+        -48
+      ],
+      "id": "c9c3f40e-f539-4071-8d89-234d32c89811",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "hridyensharma0@gmail.com",
+        "subject": "alert!!!!!",
+        "message": "=Hey,  The nightly data automation detected issues.  Invalid records found: {{$json.invalidCount}}  Please review the CSV file.  – n8n Automation",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -128
+      ],
+      "id": "d8f53b7f-66ab-424a-9645-63f9553f10ec",
+      "name": "Send a message",
+      "webhookId": "4e170ab5-100d-400a-abbf-0dd86baedd65",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SWa9IZYGJwxqFbbk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "hridyensharma0@gmail.com",
+        "subject": "✅ Data Validation Successful",
+        "message": "All good.  Valid records processed: {{$json.validCount}} No issues found.  – n8n Automation",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        80
+      ],
+      "id": "181fead9-7592-4ab4-b622-f9ebc471e6f0",
+      "name": "Send a message1",
+      "webhookId": "ae7a62a2-599d-41e0-97fd-b5451eed37f2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SWa9IZYGJwxqFbbk",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6f9471e6-943f-4e5d-8fcc-171569b9eed3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2c439bddb448bda12b3563fd722176b1289edb86f71369774c6d68912d32dd4f"
+  },
+  "id": "Wv14zX2O1PJWEZm5",
+  "tags": []
+}

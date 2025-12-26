@@ -1,0 +1,202 @@
+{
+  "name": "webhook  brain",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -320,
+        -320
+      ],
+      "id": "7cabf851-8e79-4b4b-8114-73e4fdbf5ea4",
+      "name": "Webhook",
+      "webhookId": "d5a8687b-70e5-4091-ac33-6ffdd3385ef4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "63a01067-5187-4a53-bfad-a5146c3f4bb4",
+              "name": "name",
+              "value": "={{$json.body.name}}",
+              "type": "string"
+            },
+            {
+              "id": "f3dc0e6b-7f6f-45aa-b345-5d89564b1448",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "b8ff84fc-9f37-422d-9e3d-33a874790397",
+              "name": "phone",
+              "value": "={{ $json.body.phone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -128,
+        -80
+      ],
+      "id": "258d9102-5bf3-46e2-9b89-0678b2c91b44",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { name, email, phone } = items[0].json;\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst phoneRegex = /^[0-9]{10}$/;\n\nlet errors = [];\n\nif (!name || name.length < 2) errors.push(\"Invalid name\");\nif (!email || !emailRegex.test(email)) errors.push(\"Invalid email\");\nif (!phone || !phoneRegex.test(phone)) errors.push(\"Invalid phone\");\n\nconst isValid = errors.length === 0;\n\nreturn [{\n  json: {\n    isValid,\n    responsePayload: isValid\n      ? {\n          status: \"success\",\n          message: \"Lead accepted\"\n        }\n      : {\n          status: \"error\",\n          message: \"Invalid input\",\n          errors\n        }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -176
+      ],
+      "id": "2c8d22d9-9fe6-40de-a9c1-78ee090cabf3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "12b2c112-d45a-42f5-94e3-6480fb84b47c",
+              "leftValue": "={{$json.isValid}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        272,
+        -176
+      ],
+      "id": "27127c5a-607a-4c17-83c2-5512cece8610",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"error\",\n  \"message\": \"Invalid input\"\n\n}\n",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        480,
+        -80
+      ],
+      "id": "0a76c201-3cd8-44e5-997f-6f14eb1a24e4",
+      "name": "Respond to Webhook",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"message\": \"Lead accepted\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        480,
+        -272
+      ],
+      "id": "2d79fcaa-74a2-4028-9546-5ce3b3a1c808",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "ec556362-4e6d-46d5-b6b3-77ca3e7e1423",
+  "meta": {
+    "instanceId": "caba1194f61c2cbe18845026e90de36d27c676021659c3d62d33af7fa09ebc37"
+  },
+  "id": "MmNBViBjG0HXs5sL",
+  "tags": []
+}
